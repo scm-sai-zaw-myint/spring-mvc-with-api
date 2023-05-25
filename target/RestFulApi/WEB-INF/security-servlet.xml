@@ -1,0 +1,62 @@
+<beans:beans
+    xmlns="http://www.springframework.org/schema/security"
+    xmlns:beans="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans  
+    http://www.springframework.org/schema/beans/spring-beans.xsd  
+    http://www.springframework.org/schema/security  
+    http://www.springframework.org/schema/security/spring-security.xsd">
+
+
+     <!-- Security for API -->
+    <http auto-config="true" create-session="stateless" pattern="/api/**">
+        <intercept-url pattern="/api/access-denied" access="permitAll"/>
+        <intercept-url pattern="/api/login"
+            access="permitAll" />
+        <intercept-url pattern="/api/admin"
+            access="hasRole('ROLE_ADMIN')" />
+            
+        <intercept-url pattern="/api/user" method="GET" access="hasAnyRole('ROLE_ADMIN','ROLE_OPERATOR','ROLE_USER')" />
+        <intercept-url pattern="/api/user" method="POST" access="hasAnyRole('ROLE_ADMIN','ROLE_OPERATOR')" />
+        <intercept-url pattern="/api/user/*" method="PUT" access="hasAnyRole('ROLE_ADMIN','ROLE_OPERATOR','ROLE_USER')"/>
+        <intercept-url pattern="/api/user/*" method="DELETE" access="hasRole('ROLE_ADMIN')"/>
+        
+        <csrf disabled="true" />
+        <access-denied-handler
+            error-page="/api/access-denied" />
+        <form-login login-page="/api/access-denied"/>
+        
+        <intercept-url pattern="/api/**" access="hasAnyRole('ROLE_ADMIN','ROLE_OPERATOR','ROLE_USER')"/>
+        <custom-filter ref="jwtFilterChain"
+            before="FILTER_SECURITY_INTERCEPTOR" />
+    </http>
+    <!-- Security for web -->
+    <http auto-config="true">
+        <intercept-url pattern="/login*"
+            access="permitAll" />
+        <intercept-url pattern="/admin"
+            access="hasRole('ROLE_ADMIN')" />
+        <intercept-url pattern="/user/lists"
+            access="hasAnyRole('ROLE_ADMIN','ROLE_OPERATOR')" />
+        <intercept-url pattern="/user/update/*"
+            access="permitAll" />
+        <intercept-url pattern="/user/delete/*"
+            access="hasAnyRole('ROLE_ADMIN','ROLE_OPERATOR')" />
+        <intercept-url pattern="/user/create"
+            access="permitAll" />
+        <intercept-url pattern="/user/"
+            access="hasAnyRole('ROLE_ADMIN','ROLE_OPERATOR','ROLE_USER')" />
+        <form-login login-page="/login"
+            login-processing-url="/login" default-target-url="/user/"
+            username-parameter="username" password-parameter="password" />
+        <csrf disabled="true" />
+    </http>
+
+    <authentication-manager>
+        <authentication-provider
+            user-service-ref="userService">
+            <password-encoder
+                ref="bCryptPasswordEncoder" />
+        </authentication-provider>
+    </authentication-manager>
+</beans:beans>
